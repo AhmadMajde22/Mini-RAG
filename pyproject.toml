@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "aiofiles>=25.1.0",
+    "aiofiles==25.1.0",
     "annotated-doc==0.0.4",
     "annotated-types==0.7.0",
     "anyio==4.13.0",
@@ -20,7 +20,7 @@ dependencies = [
     "pluggy==1.6.0",
     "pydantic==2.13.4",
     "pydantic-core==2.46.4",
-    "pydantic-settings>=2.14.1",
+    "pydantic-settings==2.14.1",
     "pygments==2.20.0",
     "pytest==9.0.3",
     "python-dotenv==1.2.2",
