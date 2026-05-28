@@ -1,10 +1,10 @@
 from fastapi import FastAPI, APIRouter, Depends, UploadFile, status
 from fastapi.responses import JSONResponse
+from starlette.status import HTTP_400_BAD_REQUEST
 from helpers.config import get_settings, Settings
-from controllers import DataController, ProjectController
-import os
+from controllers import DataController, ProjectController, ProcessController
 import aiofiles
-
+from .schemas.data import ProcessRequest
 from models import ResponseSignal
 import logging
 
@@ -50,3 +50,30 @@ async def upload_data(
     return JSONResponse(
         content={"signal": ResponseSignal.FILE_UPLOAD_SUCCESS.value, "file_id": file_id}
     )
+
+
+@data_router.post("/process/{project_id}")
+async def process_file(project_id: str, process_request: ProcessRequest):
+
+    file_id = process_request.file_id
+    chunk_size = process_request.chunk_size
+    overlap_size = process_request.overlap_size
+
+    process_controller = ProcessController(project_id=project_id)
+
+    file_content = process_controller.get_file_content(file_id=file_id)
+
+    file_chunks = process_controller.process_file_content(
+        file_content=file_content,
+        file_id=file_id,
+        chunk_size=chunk_size,
+        overlap_size=overlap_size,
+    )
+
+    if file_chunks is None or len(file_chunks) == 0:  # type: ignore
+        return JSONResponse(
+            content={"signal": ResponseSignal.PROCESSING_FAILED.value},
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return file_chunks
