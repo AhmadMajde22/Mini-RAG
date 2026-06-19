@@ -44,6 +44,7 @@ dependencies = [
     "motor==3.7.1",
     "multidict==6.7.1",
     "numpy==2.4.6",
+    "openai>=2.43.0",
     "orjson==3.11.9",
     "ormsgpack==1.12.2",
     "packaging==26.2",
