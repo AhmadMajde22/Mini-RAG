@@ -16,6 +16,7 @@ dependencies = [
     "certifi==2026.5.20",
     "charset-normalizer==3.4.7",
     "click==8.4.1",
+    "cohere>=7.0.4",
     "colorama==0.4.6",
     "dnspython==2.8.0",
     "fastapi==0.136.3",
