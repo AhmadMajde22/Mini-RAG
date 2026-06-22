@@ -19,13 +19,17 @@ filelock==3.29.4
 frozenlist==1.8.0
 fsspec==2026.6.0
 greenlet==3.5.1
+grpcio==1.81.1
 h11==0.16.0
+h2==4.3.0
 hf-xet==1.5.1
+hpack==4.1.0
 httpcore==1.0.9
 httptools==0.7.1
 httpx==0.28.1
 httpx-sse==0.4.3
 huggingface-hub==1.20.1
+hyperframe==6.1.0
 idna==3.16
 iniconfig==2.3.0
 jiter==0.15.0
@@ -52,7 +56,9 @@ orjson==3.11.9
 ormsgpack==1.12.2
 packaging==26.2
 pluggy==1.6.0
+portalocker==3.2.0
 propcache==0.5.2
+protobuf==7.35.1
 pydantic==2.13.4
 pydantic-core==2.46.4
 pydantic-settings==2.14.1
@@ -62,7 +68,9 @@ pymupdf==1.27.2.3
 pytest==9.0.3
 python-dotenv==1.2.2
 python-multipart==0.0.29
+pywin32==312
 pyyaml==6.0.3
+qdrant-client==1.18.0
 requests==2.34.2
 requests-toolbelt==1.0.0
 rich==15.0.0

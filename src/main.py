@@ -1,8 +1,9 @@
 from fastapi import FastAPI
-from routes import base, data
 from motor.motor_asyncio import AsyncIOMotorClient
+
 from helpers.config import get_settings
-from stores.llm.LLMProviderFactory import LLMPRroviderFactory
+from routes import base, data
+from stores.llm.LLMProviderFactory import LLMProviderFactory
 
 app = FastAPI()
 
@@ -13,7 +14,7 @@ async def startup_db_client():
     app.mongo_conn = AsyncIOMotorClient(settings.MONGODB_URL)
     app.db_client = app.mongo_conn[settings.MONGODB_DATABASE]
 
-    llm_provider_factory = LLMPRroviderFactory(settings)
+    llm_provider_factory = LLMProviderFactory(settings)
 
     app.generation_client = llm_provider_factory.create(settings.GENERATION_BACKEND)
     app.generation_client.set_generation_model(settings.GENERATION_MODEL_ID)
