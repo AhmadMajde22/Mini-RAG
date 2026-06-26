@@ -1,8 +1,9 @@
+from bson.objectid import ObjectId
+from pymongo import InsertOne
+
 from .BaseDataModel import BaseDataModel
 from .db_schemas import DataChunk
 from .enums.DataBaseEnum import DataBaseEnum
-from bson.objectid import ObjectId
-from pymongo import InsertOne
 
 
 class ChunkModel(BaseDataModel):
@@ -43,6 +44,18 @@ class ChunkModel(BaseDataModel):
         if result is None:
             return None
         return DataChunk(**result)
+
+    async def get_project_chunks(
+        self, project_id: ObjectId, page_number: int = 1, page_size: int = 50
+    ):
+        records = (
+            await self.collection.find({"chunk_project_id": project_id})
+            .skip((page_number - 1) * page_size)
+            .limit(page_size)
+            .to_list(length=None)
+        )
+
+        return [DataChunk(**record) for record in records]
 
     async def insert_many_chunks(self, chunks: list, batch_size: int = 100):
 

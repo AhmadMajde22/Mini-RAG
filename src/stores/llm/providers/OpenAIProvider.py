@@ -26,7 +26,7 @@ class OpenAIProvider(LLMInterface):
         self.embedding_model_id = None
         self.embedding_size = None
 
-        self.client = OpenAI(api_key=self.api_key, api_url=self.api_url)
+        self.client = OpenAI(api_key=self.api_key, base_url=self.api_url)
 
         self.logger = logging.getLogger(__name__)
 
@@ -108,6 +108,25 @@ class OpenAIProvider(LLMInterface):
             return None
 
         return response.data[0].embedding
+
+    def embed_texts(self, texts: list[str], document_type: str = None):  # type: ignore
+        if not self.client:
+            self.logger.error("OpenAI client was not set")
+            return None
+
+        if not self.embedding_model_id:
+            self.logger.error("Embedding model for OpenAI was not set")
+            return None
+
+        response = self.client.embeddings.create(
+            model=self.embedding_model_id,
+            input=[self.process_text(text) for text in texts],
+        )
+        if not response or not response.data or len(response.data) != len(texts):
+            self.logger.error("Error while embedding texts with OpenAI")
+            return None
+
+        return [item.embedding for item in response.data]
 
     def construct_prompt(self, prompt: str, role: str):  # type: ignore
         return {"role": role, "content": self.process_text(prompt)}

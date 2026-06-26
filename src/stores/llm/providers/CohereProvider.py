@@ -90,18 +90,59 @@ class CoHereProvider(LLMInterface):
         if document_type == DocumentTypeEnum.QUERY.value:
             input_type = CoHereEnums.QUERY.value
 
-        response = self.client.embed(
-            model=self.embedding_model_id,
-            texts=[self.process_text(text)],
-            input_type=input_type,
-            output_dimension=self.embedding_size,
-            embedding_types=["float"],
-        )
+        try:
+            response = self.client.embed(
+                model=self.embedding_model_id,
+                texts=[self.process_text(text)],
+                input_type=input_type,
+                output_dimension=self.embedding_size,
+                embedding_types=["float"],
+            )
+        except Exception as e:
+            self.logger.error(f"Error While embeddding text with CoHere: {e}")
+            return None
 
         if not response or not response.embeddings or not response.embeddings.float_:
             self.logger.error("Error While embeddding text with CoHere")
             return None
         return response.embeddings.float_[0]
+
+    def embed_texts(self, texts: list[str], document_type: str = None):  # type: ignore
+        if not self.client:
+            self.logger.error("CoHere client was not set")
+            return None
+
+        if not self.embedding_model_id:
+            self.logger.error("Embedding model for CoHere was not set")
+            return None
+
+        input_type = CoHereEnums.DOCUMENT.value
+
+        if document_type == DocumentTypeEnum.QUERY.value:
+            input_type = CoHereEnums.QUERY.value
+
+        try:
+            response = self.client.embed(
+                model=self.embedding_model_id,
+                texts=[self.process_text(text) for text in texts],
+                input_type=input_type,
+                output_dimension=self.embedding_size,
+                embedding_types=["float"],
+            )
+        except Exception as e:
+            self.logger.error(f"Error While embeddding texts with CoHere: {e}")
+            return None
+
+        if (
+            not response
+            or not response.embeddings
+            or not response.embeddings.float_
+            or len(response.embeddings.float_) != len(texts)
+        ):
+            self.logger.error("Error While embeddding texts with CoHere")
+            return None
+
+        return response.embeddings.float_
 
     def construct_prompt(self, prompt: str, role: str):  # type: ignore
         return {"role": role, "content": self.process_text(prompt)}
