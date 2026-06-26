@@ -26,5 +26,9 @@ class LLMInterface(ABC):
         pass
 
     @abstractmethod
+    def embed_texts(self, texts: list[str], document_type: str = None):
+        pass
+
+    @abstractmethod
     def construct_prompt(self, prompt: str, role: str):
         pass

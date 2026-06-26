@@ -1,4 +1,4 @@
-from src.controllers.BaseController import BaseController
+from controllers.BaseController import BaseController
 
 from .providers import QdrantDBProvider
 from .VectorDBEnums import VectorDBEnums

@@ -103,7 +103,16 @@ class QdrantDBProvider(VectorDBInterface):
             metadata = [None] * len(texts)
 
         if not record_ids:
-            record_ids = [None] * len(texts)
+            self.logger.error("No record ids were provided for vector db insertion")
+            return False
+
+        if len(record_ids) != len(texts):
+            self.logger.error("Record ids count does not match texts count")
+            return False
+
+        if any(record_id is None for record_id in record_ids):
+            self.logger.error("Record ids contain empty values")
+            return False
 
         for i in range(0, len(texts), batch_size):
 
