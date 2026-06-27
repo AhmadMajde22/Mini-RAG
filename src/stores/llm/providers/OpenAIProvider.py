@@ -1,7 +1,9 @@
-from ..LLMInterface import LLMInterface
-from openai import OpenAI
 import logging
+
+from openai import OpenAI
+
 from ..LLMEnums import OpenAIEnums
+from ..LLMInterface import LLMInterface
 
 
 class OpenAIProvider(LLMInterface):
@@ -15,7 +17,10 @@ class OpenAIProvider(LLMInterface):
         default_generation_temperature: float = 0.1,
     ):
         self.api_key = api_key
-        self.api_url = api_url
+        self.api_url = api_url.strip() if api_url else None
+
+        if self.api_url and not self.api_url.startswith(("http://", "https://")):
+            raise ValueError("OPENAI_API_URL must start with 'http://' or 'https://'")
 
         self.default_input_max_characters = default_input_max_characters
         self.default_generation_max_output_tokens = default_generation_max_output_tokens
@@ -26,7 +31,13 @@ class OpenAIProvider(LLMInterface):
         self.embedding_model_id = None
         self.embedding_size = None
 
-        self.client = OpenAI(api_key=self.api_key, base_url=self.api_url)
+        self.enums = OpenAIEnums
+
+        client_options = {"api_key": self.api_key}
+        if self.api_url:
+            client_options["base_url"] = self.api_url
+
+        self.client = OpenAI(**client_options)
 
         self.logger = logging.getLogger(__name__)
 
@@ -44,8 +55,8 @@ class OpenAIProvider(LLMInterface):
     def generate_text(  # type: ignore
         self,
         prompt: str,
-        max_output_tokens: int,
-        chat_history: list = [],
+        max_output_tokens: int = None,
+        chat_history: list = None,
         temperature: float = None,
     ):
 
@@ -65,6 +76,7 @@ class OpenAIProvider(LLMInterface):
             temperature if temperature else self.default_generation_temperature
         )
 
+        chat_history = chat_history or []
         chat_history.append(self.construct_prompt(prompt, role=OpenAIEnums.USER.value))
 
         response = self.client.chat.completions.create(
