@@ -1,7 +1,9 @@
-from ..LLMInterface import LLMInterface
-from ..LLMEnums import CoHereEnums, DocumentTypeEnum
 import logging
+
 import cohere
+
+from ..LLMEnums import CoHereEnums, DocumentTypeEnum
+from ..LLMInterface import LLMInterface
 
 
 class CoHereProvider(LLMInterface):
@@ -23,6 +25,8 @@ class CoHereProvider(LLMInterface):
         self.embedding_model_id = None
         self.embedding_size = None
 
+        self.enums = CoHereEnums
+
         self.client = cohere.ClientV2(api_key=self.api_key)
 
         self.logger = logging.getLogger(__name__)
@@ -40,8 +44,8 @@ class CoHereProvider(LLMInterface):
     def generate_text(  # type: ignore
         self,
         prompt: str,
-        max_output_tokens: int,
-        chat_history: list = ...,
+        max_output_tokens: int = None,
+        chat_history: list = None,
         temperature: float = None,
     ):
 
@@ -61,6 +65,7 @@ class CoHereProvider(LLMInterface):
             temperature if temperature else self.default_generation_temperature
         )
 
+        chat_history = chat_history or []
         chat_history.append(self.construct_prompt(prompt, role=CoHereEnums.USER.value))
 
         response = self.client.chat(
