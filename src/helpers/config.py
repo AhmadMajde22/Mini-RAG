@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic_settings import BaseSettings, SecretsSettingsSource
 
 
@@ -17,7 +19,7 @@ class Settings(BaseSettings):
     EMBEDDING_BACKEND: str
 
     OPENAI_API_KEY: str
-    OPENAI_API_URL: str
+    OPENAI_API_URL: Optional[str] = None
     COHERE_API_KEY: str
 
     GENERATION_MODEL_ID: str
