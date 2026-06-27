@@ -14,7 +14,7 @@ class TemplateParser:
         language_path = os.path.join(self.current_path, "locales", target_language)
 
         if os.path.exists(language_path):
-            self.language = target_language
+            self.language = target_language # type: ignore
 
         else:
             self.language = self.default_language
@@ -50,5 +50,3 @@ class TemplateParser:
             return key_attribute.substitute(vars or {})
 
         return key_attribute
-
-    
