@@ -1,5 +1,5 @@
-import logging
 import json
+import logging
 import ssl
 import urllib.error
 import urllib.request
@@ -145,9 +145,7 @@ class OpenAIProvider(LLMInterface):
                     ) as response:
                         response_data = json.loads(response.read().decode("utf-8"))
                 except urllib.error.HTTPError as retry_error:
-                    error_body = retry_error.read().decode(
-                        "utf-8", errors="replace"
-                    )
+                    error_body = retry_error.read().decode("utf-8", errors="replace")
                     self.logger.error(
                         "Ollama request failed: status=%s, body=%s",
                         retry_error.code,
@@ -160,7 +158,7 @@ class OpenAIProvider(LLMInterface):
             else:
                 self.logger.exception("Error while generating text with Ollama")
                 return None
-        except urllib.error.HTTPError as e:
+        except urllib.error.HTTPError as e:  # type: ignore
             error_body = e.read().decode("utf-8", errors="replace")
             self.logger.error(
                 "Ollama request failed: status=%s, body=%s",
@@ -304,12 +302,16 @@ class OpenAIProvider(LLMInterface):
                 "LLM retry metadata: finish_reason=%s, has_content=%s, has_reasoning=%s, usage=%s",
                 retry_choice.finish_reason if retry_choice else None,
                 bool(retry_message.content) if retry_message else False,
-                bool(getattr(retry_message, "reasoning", None))
-                if retry_message
-                else False,
-                retry_response.usage.model_dump()
-                if retry_response and retry_response.usage
-                else None,
+                (
+                    bool(getattr(retry_message, "reasoning", None))
+                    if retry_message
+                    else False
+                ),
+                (
+                    retry_response.usage.model_dump()
+                    if retry_response and retry_response.usage
+                    else None
+                ),
             )
 
             if retry_message and retry_message.content:
