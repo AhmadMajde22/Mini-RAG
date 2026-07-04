@@ -25,7 +25,7 @@ def upgrade() -> None:
     sa.Column('project_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('project_uuid', sa.UUID(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('project_id'),
     sa.UniqueConstraint('project_uuid')
     )
@@ -38,7 +38,7 @@ def upgrade() -> None:
     sa.Column('asset_config', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('asset_project_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['asset_project_id'], ['projects.project_id'], ),
     sa.PrimaryKeyConstraint('asset_id'),
     sa.UniqueConstraint('asset_uuid')
@@ -54,7 +54,7 @@ def upgrade() -> None:
     sa.Column('chunk_project_id', sa.Integer(), nullable=False),
     sa.Column('chunk_asset_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['chunk_asset_id'], ['assets.asset_id'], ),
     sa.ForeignKeyConstraint(['chunk_project_id'], ['projects.project_id'], ),
     sa.PrimaryKeyConstraint('chunk_id'),
