@@ -52,7 +52,7 @@ class NLPController(BaseController):
         texts = [c.chunk_text for c in chunks]
 
         metadata = [c.chunk_metadata for c in chunks]
-        record_ids = [str(uuid5(NAMESPACE_URL, str(c.id))) for c in chunks]
+        record_ids = [str(uuid5(NAMESPACE_URL, str(c.chunk_id))) for c in chunks]
 
         vectors = self.embedding_client.embed_texts(
             texts=texts, document_type=DocumentTypeEnum.DOCUMENT.value
@@ -111,7 +111,12 @@ class NLPController(BaseController):
         document_prompts = "\n".join(
             [
                 self.template_parser.get(
-                    "rag", "document_prompt", {"doc_num": idx, "chunk_text": doc.text}
+                    "rag",
+                    "document_prompt",
+                    {
+                        "doc_num": idx,
+                        "chunk_text": self.generation_client.process_text(doc.text),
+                    },
                 )
                 for idx, doc in enumerate(retrieved_documents, start=1)
             ]

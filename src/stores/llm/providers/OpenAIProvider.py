@@ -363,4 +363,4 @@ class OpenAIProvider(LLMInterface):
         return [item.embedding for item in response.data]
 
     def construct_prompt(self, prompt: str, role: str):  # type: ignore
-        return {"role": role, "content": self.process_text(prompt)}
+        return {"role": role, "content": prompt}

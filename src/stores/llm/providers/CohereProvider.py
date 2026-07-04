@@ -150,4 +150,4 @@ class CoHereProvider(LLMInterface):
         return response.embeddings.float_
 
     def construct_prompt(self, prompt: str, role: str):  # type: ignore
-        return {"role": role, "content": self.process_text(prompt)}
+        return {"role": role, "content": prompt}
