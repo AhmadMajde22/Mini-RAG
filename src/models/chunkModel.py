@@ -1,4 +1,4 @@
-from sqlalchemy import delete
+from sqlalchemy import delete, func
 from sqlalchemy.future import select
 
 from .BaseDataModel import BaseDataModel
@@ -49,6 +49,16 @@ class ChunkModel(BaseDataModel):
             )
 
             return result.scalars().all()
+
+    async def get_total_chunk_count(self, project_id: int) -> int:
+        async with self.db_client() as session:
+            count_sql = await session.execute(
+                select(func.count(DataChunk.chunk_id)).where(
+                    DataChunk.chunk_project_id == project_id
+                )
+            )
+
+            return count_sql.scalar_one()
 
     async def insert_many_chunks(self, chunks: list, batch_size: int = 100):
         if batch_size < 1:
