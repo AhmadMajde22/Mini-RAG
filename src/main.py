@@ -28,7 +28,10 @@ async def startup_span(app: FastAPI):
     )
 
     llm_provider_factory = LLMProviderFactory(settings)
-    vectordb_provider_factory = VectorDBProviderFactory(settings)
+    vectordb_provider_factory = VectorDBProviderFactory(
+        settings,
+        db_client=app.db_client,
+    )
 
     app.generation_client = llm_provider_factory.create(settings.GENERATION_BACKEND)
     app.generation_client.set_generation_model(settings.GENERATION_MODEL_ID)
@@ -42,7 +45,7 @@ async def startup_span(app: FastAPI):
 
     app.vectordb_client = vectordb_provider_factory.create(settings.VECTOR_DB_BACKEND)
 
-    app.vectordb_client.connect()
+    await app.vectordb_client.connect()
 
     app.template_parser = TemplateParser(
         language=settings.PRIMARY_LANG, default_language=settings.DEFAULT_LANG
@@ -50,8 +53,8 @@ async def startup_span(app: FastAPI):
 
 
 async def shutdown_span(app: FastAPI):
-    app.db_engine.dispose()
-    app.vectordb_client.disconnect()
+    await app.vectordb_client.disconnect()
+    await app.db_engine.dispose()
 
 
 @asynccontextmanager

@@ -1,4 +1,7 @@
 import logging
+import time
+from collections.abc import Callable
+from typing import Any
 
 import cohere
 
@@ -30,6 +33,33 @@ class CoHereProvider(LLMInterface):
         self.client = cohere.ClientV2(api_key=self.api_key)
 
         self.logger = logging.getLogger(__name__)
+
+    def _get_rate_limit_delay(self, error: Exception) -> float:
+        headers = getattr(error, "headers", {}) or {}
+        retry_after = headers.get("retry-after") or headers.get("Retry-After")
+
+        try:
+            return max(float(retry_after), 1.0)
+        except (TypeError, ValueError):
+            return 60.0
+
+    def _call_with_rate_limit_retry(
+        self, operation: Callable[[], Any], operation_name: str
+    ) -> Any:
+        while True:
+            try:
+                return operation()
+            except Exception as error:
+                if getattr(error, "status_code", None) != 429:
+                    raise
+
+                retry_delay = self._get_rate_limit_delay(error)
+                self.logger.warning(
+                    "Cohere rate limit reached during %s; retrying in %.0f seconds.",
+                    operation_name,
+                    retry_delay,
+                )
+                time.sleep(retry_delay)
 
     def set_generation_model(self, model_id: str):
         self.generation_model_id = model_id
@@ -68,12 +98,19 @@ class CoHereProvider(LLMInterface):
         chat_history = chat_history or []
         chat_history.append(self.construct_prompt(prompt, role=CoHereEnums.USER.value))
 
-        response = self.client.chat(
-            model=self.generation_model_id,
-            messages=chat_history,
-            temperature=temperature,
-            max_tokens=max_output_tokens,
-        )
+        try:
+            response = self._call_with_rate_limit_retry(
+                lambda: self.client.chat(
+                    model=self.generation_model_id,
+                    messages=chat_history,
+                    temperature=temperature,
+                    max_tokens=max_output_tokens,
+                ),
+                "text generation",
+            )
+        except Exception as error:
+            self.logger.error(f"Error while generating text with CoHere: {error}")
+            return None
 
         if not response or not response.message.content[0].text:
             self.logger.error("Error while generating text with CoHere")
@@ -96,12 +133,15 @@ class CoHereProvider(LLMInterface):
             input_type = CoHereEnums.QUERY.value
 
         try:
-            response = self.client.embed(
-                model=self.embedding_model_id,
-                texts=[self.process_text(text)],
-                input_type=input_type,
-                output_dimension=self.embedding_size,
-                embedding_types=["float"],
+            response = self._call_with_rate_limit_retry(
+                lambda: self.client.embed(
+                    model=self.embedding_model_id,
+                    texts=[self.process_text(text)],
+                    input_type=input_type,
+                    output_dimension=self.embedding_size,
+                    embedding_types=["float"],
+                ),
+                "single-text embedding",
             )
         except Exception as e:
             self.logger.error(f"Error While embeddding text with CoHere: {e}")
@@ -127,12 +167,15 @@ class CoHereProvider(LLMInterface):
             input_type = CoHereEnums.QUERY.value
 
         try:
-            response = self.client.embed(
-                model=self.embedding_model_id,
-                texts=[self.process_text(text) for text in texts],
-                input_type=input_type,
-                output_dimension=self.embedding_size,
-                embedding_types=["float"],
+            response = self._call_with_rate_limit_retry(
+                lambda: self.client.embed(
+                    model=self.embedding_model_id,
+                    texts=[self.process_text(text) for text in texts],
+                    input_type=input_type,
+                    output_dimension=self.embedding_size,
+                    embedding_types=["float"],
+                ),
+                "batch embedding",
             )
         except Exception as e:
             self.logger.error(f"Error While embeddding texts with CoHere: {e}")

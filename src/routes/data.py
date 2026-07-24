@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, FastAPI, Request, UploadFile, status
 from fastapi.responses import JSONResponse
 from starlette.status import HTTP_400_BAD_REQUEST
 
-from controllers import DataController, ProcessController, ProjectController
+from controllers import (
+    DataController,
+    NLPController,
+    ProcessController,
+    ProjectController,
+)
 from helpers.config import Settings, get_settings
 from models import AssetTypeEnum, ResponseSignal
 from models.AssetModel import AssetModel
@@ -99,6 +104,13 @@ async def process_file(
 
     asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
 
+    nlp_controller = NLPController(
+        vectordb_client=request.app.vectordb_client,
+        generation_client=request.app.generation_client,
+        embedding_client=request.app.embedding_client,
+        template_parser=request.app.template_parser,
+    )
+
     project_file_ids = {}
 
     if process_request.file_id:
@@ -120,7 +132,9 @@ async def process_file(
             asset_project_id=project.project_id, asset_type=AssetTypeEnum.FILE.value
         )
 
-        project_file_ids = {record.asset_id: record.asset_name for record in project_files}
+        project_file_ids = {
+            record.asset_id: record.asset_name for record in project_files
+        }
 
     if len(project_file_ids) == 0:
         return JSONResponse(
@@ -134,6 +148,11 @@ async def process_file(
     no_files = 0
 
     if do_reset == 1:
+        collection_name = nlp_controller.create_collection_name(
+            project_id=project.project_id
+        )
+
+        _ = await request.app.vectordb_client.delete_collection(collection_name)
         _ = await chunk_model.delete_chunks_by_project_id(project_id=project.project_id)
 
     for asset_id, file_id in project_file_ids.items():

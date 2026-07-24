@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic_settings import BaseSettings, SecretsSettingsSource
 
@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     OPENAI_API_URL: Optional[str] = None
     COHERE_API_KEY: str
 
+    GENERATION_MODEL_ID_LITERAL: List[str] = None  # type: ignore
     GENERATION_MODEL_ID: str
     EMBEDDING_MODEL_ID: str
     EMBEDDING_MODEL_SIZE: int
@@ -36,9 +37,11 @@ class Settings(BaseSettings):
     GENERATION_DEFAULT_MAX_TOKENS: int
     GENERATION_DEFAULT_TEMPERATURE: float
 
+    VECTOR_DB_BACKEND_LITERAL: List[str] = None  # type: ignore
     VECTOR_DB_BACKEND: str
     VECTOR_DB_PATH: str
     VECTOR_DB_DISTANCE_METHOD: str
+    VECTOR_DB_PGVEC_INDEX_THRESHOLD: int = 100
 
     DEFAULT_LANG: str
     PRIMARY_LANG: str
