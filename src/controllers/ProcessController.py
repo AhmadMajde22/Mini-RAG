@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List
 
 from langchain_community.document_loaders import PyMuPDFLoader, TextLoader
-from langchain_core.documents import Document
+from langchain_core.documents import Document  # type: ignore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from models import ProcessingEnum

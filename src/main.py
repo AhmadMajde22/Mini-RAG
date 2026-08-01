@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import create_async_engine,AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from helpers.config import get_settings
@@ -9,6 +9,7 @@ from routes import base, data, nlp
 from stores.llm.LLMProviderFactory import LLMProviderFactory
 from stores.llm.templates.template_parser import TemplateParser
 from stores.vectordb.VectorDBProviderFactory import VectorDBProviderFactory
+from utils.metrics import setup_metrics
 
 
 async def startup_span(app: FastAPI):
@@ -18,13 +19,10 @@ async def startup_span(app: FastAPI):
 
     app.db_engine = create_async_engine(postgres_conn)
 
-
-
-    app.db_client =sessionmaker(
+    app.db_client = sessionmaker(
         app.db_engine,
-        class_ = AsyncSession,
+        class_=AsyncSession,
         expire_on_commit=False,
-
     )
 
     llm_provider_factory = LLMProviderFactory(settings)
@@ -67,6 +65,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+setup_metrics(app=app)
 
 app.include_router(base.base_router)
 app.include_router(data.data_router)
