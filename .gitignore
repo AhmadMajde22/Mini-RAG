@@ -153,7 +153,7 @@ activemq-data/
 .env
 .envrc
 .venv
-env/
+env
 venv/
 ENV/
 env.bak/
@@ -222,6 +222,9 @@ __marimo__/
 assets
 
 
-docker/mongodb/
+!docker/env/
+docker/env/*
+!docker/env/.env.*.example
 
 src/models/db_schemas/minirag/alembic.ini
+docker/minirag/alembic.ini
