@@ -165,8 +165,7 @@ class PGVectorProvider(VectorDBInterface):
 
         allowed_index_types = {item.value for item in PgVectorIndexTypeEnums}
         if index_type not in allowed_index_types:
-            self.logger.error(f"Unsupported vector index type: {index_type}")
-            return False
+            raise ValueError(f"Unsupported vector index type: {index_type}")
 
         try:
             distance_method = DistanceMethodEnums(self.distance_method)
@@ -174,17 +173,17 @@ class PGVectorProvider(VectorDBInterface):
                 distance_method.name
             ].value
         except (ValueError, KeyError):
-            self.logger.error(f"Unsupported distance method: {self.distance_method}")
-            return False
+            raise ValueError(
+                f"Unsupported distance method: {self.distance_method}"
+            )
 
         if not await self.is_collection_existed(collection_name=collection_name):
-            self.logger.error(f"Collection does not exist: {collection_name}")
-            return False
+            raise ValueError(f"Collection does not exist: {collection_name}")
 
         is_index_existed = await self.is_index_existed(collection_name=collection_name)
 
         if is_index_existed:
-            return False
+            return True
 
         async with self.db_client() as session:
             count_sql = sql_text(f'SELECT COUNT(*) FROM "{collection_name}"')
@@ -193,6 +192,13 @@ class PGVectorProvider(VectorDBInterface):
             records_count = result.scalar_one()
 
             if records_count < self.index_threshold:
+                self.logger.info(
+                    "Skipping vector index creation for %s: %s records is below "
+                    "the threshold of %s",
+                    collection_name,
+                    records_count,
+                    self.index_threshold,
+                )
                 return False
 
             self.logger.info(
@@ -212,7 +218,7 @@ class PGVectorProvider(VectorDBInterface):
             except Exception as exc:
                 await session.rollback()
                 self.logger.error(f"Error while creating vector index: {exc}")
-                return False
+                raise
 
             self.logger.info(
                 f"END Creating vector index for collection : {collection_name}"

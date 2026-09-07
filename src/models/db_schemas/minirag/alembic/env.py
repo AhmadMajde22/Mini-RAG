@@ -1,12 +1,35 @@
 from logging.config import fileConfig
+from pathlib import Path
+import sys
 
 from alembic import context
 from schemas import SQLAlchemyBase
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import URL, engine_from_config, pool
+
+
+SRC_DIR = Path(__file__).resolve().parents[4]
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from helpers.config import Settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+settings = Settings(_env_file=SRC_DIR / ".env")
+database_url = URL.create(
+    drivername="postgresql+psycopg2",
+    username=settings.POSTGRES_USERNAME,
+    password=settings.POSTGRES_PASSWORD,
+    host=settings.POSTGRES_HOST,
+    port=settings.POSTGRES_PORT,
+    database=settings.POSTGRES_MAIN_DATABASE,
+)
+config.set_main_option(
+    "sqlalchemy.url",
+    database_url.render_as_string(hide_password=False).replace("%", "%%"),
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -18,6 +41,13 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = SQLAlchemyBase.metadata
+
+
+def include_name(name, type_, parent_names):
+    """Exclude vector-store tables that are managed at runtime."""
+    if type_ == "table" and name.startswith("collection_"):
+        return False
+    return True
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -41,6 +71,7 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        include_name=include_name,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -63,7 +94,11 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            include_name=include_name,
+        )
 
         with context.begin_transaction():
             context.run_migrations()
